@@ -24,3 +24,5 @@ Some soldering & coding may be required!
 * Connect display to +5V, GND, SCL, & SCA (A4 & A5 on the Metro Mini)
 * Upload the sketch included in this repository to the Arduino using the Arduino IDE & a USB cable!
 
+### Software Notes
+- minor modification to `Sunrise` v2.0.4 library required (added `#define rint(x) (double)lrint(x)` as suggested)

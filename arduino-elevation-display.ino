@@ -11,10 +11,13 @@
 #include <Adafruit_GPS.h>
 #include <SoftwareSerial.h>
 #include <TimeLib.h>
+// Mild modification required for Sunrise v2.0.4 (see README)
 #include <SunRise.h>
-#include "HT16K33.h"
+// Stuff for 7 segment display
+#include <Wire.h> 
+#include "Adafruit_LEDBackpack.h"
 
-HT16K33 seg(0x70);
+Adafruit_7segment matrix = Adafruit_7segment();
 
 SunRise sr;
 
@@ -45,20 +48,22 @@ Adafruit_GPS GPS(&mySerial);
 void setup()
 {
 
-  // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
+  // Print out at 115200 so we can read the GPS fast enough and echo without dropping chars
   // also spit it out
   Serial.begin(115200);
 
-  seg.begin();
+  // Default I2C address for display is 0x70
+  matrix.begin(0x70);
+  matrix.setBrightness(0);
+
   Wire.setClock(100000);
-  seg.displayOn();
-  seg.displayClear();  
 
   //Just show 0.000 until we get a GPS fix
-  seg.displayFloat(0,4);
+  matrix.print(6969);
+  matrix.writeDisplay();
   Serial.print("Startup: setting brightness to: ");
   Serial.println(nighttimeBrightness);
-  seg.brightness(nighttimeBrightness);
+  matrix.setBrightness(nighttimeBrightness);
   currentBrightness = nighttimeBrightness;
   delay(5000);
  
@@ -132,14 +137,14 @@ void loop()                     // run over and over again
       Serial.println("It's daytime!");
       if (currentBrightness != daytimeBrightness) {
         Serial.println("Setting brightness to day");
-        seg.brightness(daytimeBrightness);
+        matrix.setBrightness(daytimeBrightness);
         currentBrightness = daytimeBrightness;
       }
     } else {
       Serial.println("It's nighttime!");
       if (currentBrightness != nighttimeBrightness) {
         Serial.println("Setting brightness to night");
-        seg.brightness(nighttimeBrightness);
+        matrix.setBrightness(nighttimeBrightness);
         currentBrightness = nighttimeBrightness;
       }   
     }
@@ -157,7 +162,8 @@ void loop()                     // run over and over again
        } else {
          doubFt = doubFt + (10 - mod);
        }
-       seg.displayInt((int) doubFt); 
+       matrix.print(doubFt);
+       matrix.writeDisplay(); 
       Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
     } 
   }
