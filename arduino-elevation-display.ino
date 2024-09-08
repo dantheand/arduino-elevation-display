@@ -76,15 +76,16 @@ void setup()
   // Print out to serial port at 115200 so we can read the GPS fast enough and echo without dropping chars
   Serial.begin(115200);
 
-  // Default I2C address for display is 0x70 (I did through STEMMA QT)
+  // Default I2C address for display is 0x70
   matrix.begin(0x70);
   matrix.clear();
 
   Wire.setClock(100000);
 
-  //Just show dashes until we get a GPS fix
+  // Just show dashes until we get a GPS fix
   matrix.print("----");
   matrix.writeDisplay();
+
   Serial.print("Startup: setting brightness to: ");
   Serial.println(nighttimeBrightness);
   matrix.setBrightness(nighttimeBrightness);
@@ -148,7 +149,7 @@ void loop()                     // run over and over again
 
       // Calculate and display altitude
       double doubFt = GPS.altitude * 3.28084;
-      //Round to nearest 10
+      // Round to nearest 10
       int mod = (int) doubFt % 10;
       if (mod < 5) {
       doubFt = doubFt - mod;
@@ -156,23 +157,20 @@ void loop()                     // run over and over again
         doubFt = doubFt + (10 - mod);
       }
       int intAltitude = (int)doubFt;
-      // If it's greater than 9,999, display in the thousands instead (e.g. 11300 will be 11.3K)
-      if (doubFt > 9999){
-        unsigned a = (intAltitude / 10000U) % 10;
-        unsigned b = (intAltitude / 1000U) % 10;
-        unsigned c = (intAltitude / 100U) % 10;
-        matrix.writeDigitNum(0, a);
-        matrix.writeDigitNum(1, b, true);
-        matrix.writeDigitNum(3, c);
-        matrix.writeDigitAscii(4, 75);
-        Serial.print("Altitude: "); Serial.println(intAltitude);
 
+      // If it's greater than 9,999, display in the thousands instead (e.g. 11300 will be 11.3K)
+      if (intAltitude > 9999){
+        matrix.writeDigitNum(0, (intAltitude / 10000U) % 10);
+        matrix.writeDigitNum(1, (intAltitude / 1000U) % 10, true);
+        matrix.writeDigitNum(3, (intAltitude / 100U) % 10);
+        // This is the ASCII code for the letter "K"
+        matrix.writeDigitAscii(4, 75);
       } else {
         matrix.print(intAltitude);
-        Serial.print("Altitude: "); Serial.println(intAltitude);
       }
-
       matrix.writeDisplay(); 
+
+      Serial.print("Altitude: "); Serial.println(intAltitude);
       Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
     } 
   }
