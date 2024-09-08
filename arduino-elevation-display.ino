@@ -1,19 +1,17 @@
-// Elevation display by Kris Linquist
-// Requires SunRise.h / TimeLib.h / Adafruit_GPS.h / SoftwareSerial.h / HK16K33.h
+// Elevation display by Dan Anderson
+// Forked from https://github.com/klinquist/Arduino-Elevation-Display by Kris Linquist
 
-
-// Tested and works great with the Adafruit Ultimate GPS module
-// using MTK33x9 chipset
-//    ------> http://www.adafruit.com/products/746
+// Tested and works great with the Adafruit Mini GPS PA1010D Breakout board
+// using MTK3333 chipset
+//    ------> https://www.adafruit.com/product/4415
 
 //And the Adafruit 7 segment I2C LCD
 
 #include <Adafruit_GPS.h>
 #include <SoftwareSerial.h>
 #include <TimeLib.h>
-// Mild modification required for Sunrise v2.0.4 (see README)
+// Mild modification required for Sunrise v2.0.4 to get it to compile with Arduino UNO (see README)
 #include <SunRise.h>
-// Stuff for 7 segment display
 #include <Wire.h> 
 #include "Adafruit_LEDBackpack.h"
 
@@ -25,41 +23,67 @@ tmElements_t te;  //Time elements structure
 time_t unixTime; // a time stamp
 
 
-int daytimeBrightness = 15;
+int daytimeBrightness = 10;
 int nighttimeBrightness = 0;
 int currentBrightness;
 
-
-// Connect the GPS Power pin to 5V
-// Connect the GPS Ground pin to ground
-// Connect the GPS TX (transmit) pin to Digital 8
-// Connect the GPS RX (receive) pin to Digital 7
-
-// you can change the pin numbers to match your wiring:
-SoftwareSerial mySerial(8, 7);
-Adafruit_GPS GPS(&mySerial);
+// Connect to the GPS on the hardware I2C port (STEMMA QT)
+Adafruit_GPS GPS(&Wire);
 
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences
 #define GPSECHO  false
-//
 
+// Set brightness based on if it's daytime or nighttime
+void setBrightness()
+{
+  te.Second = GPS.seconds;
+  te.Hour = GPS.hour;
+  te.Minute = GPS.minute;
+  te.Day = GPS.day;
+  te.Month = GPS.month;
+  int actualYear = 2000 + GPS.year;
+  te.Year = actualYear - 1970;
+  unixTime = makeTime(te);
+
+  float lata = GPS.latitude/100;
+  float longi = 0 - (GPS.longitude/100);
+
+  sr.calculate(lata, longi, unixTime);
+  Serial.print("Unixtime: ");
+  Serial.println(unixTime);
+
+  if (sr.isVisible){
+    Serial.println("It's daytime!");
+    if (currentBrightness != daytimeBrightness) {
+      Serial.println("Setting brightness to day");
+      matrix.setBrightness(daytimeBrightness);
+      currentBrightness = daytimeBrightness;
+    }
+  } else {
+    Serial.println("It's nighttime!");
+    if (currentBrightness != nighttimeBrightness) {
+      Serial.println("Setting brightness to night");
+      matrix.setBrightness(nighttimeBrightness);
+      currentBrightness = nighttimeBrightness;
+    }   
+  }
+}
 
 void setup()
 {
 
-  // Print out at 115200 so we can read the GPS fast enough and echo without dropping chars
-  // also spit it out
+  // Print out to serial port at 115200 so we can read the GPS fast enough and echo without dropping chars
   Serial.begin(115200);
 
-  // Default I2C address for display is 0x70
+  // Default I2C address for display is 0x70 (I did through STEMMA QT)
   matrix.begin(0x70);
-  matrix.setBrightness(0);
+  matrix.clear();
 
   Wire.setClock(100000);
 
-  //Just show 0.000 until we get a GPS fix
-  matrix.print(6969);
+  //Just show dashes until we get a GPS fix
+  matrix.print("----");
   matrix.writeDisplay();
   Serial.print("Startup: setting brightness to: ");
   Serial.println(nighttimeBrightness);
@@ -69,7 +93,8 @@ void setup()
  
 
   // 9600 NMEA is the default baud rate for Adafruit MTK GPS's- some use 4800
-  GPS.begin(9600);
+  // The I2C address to use is 0x10
+  GPS.begin(0x10);  
 
   // uncomment this line to turn on RMC (recommended minimum) and GGA (fix data) including altitude
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
@@ -88,8 +113,7 @@ void setup()
 
   delay(1000);
   // Ask for firmware version
-  mySerial.println(PMTK_Q_RELEASE);
-
+  GPS.println(PMTK_Q_RELEASE);
   
 }
 
@@ -116,54 +140,39 @@ void loop()                     // run over and over again
   if (millis() - timer > 2000) {
     timer = millis(); // reset the timer
 
-    te.Second = GPS.seconds;
-    te.Hour = GPS.hour;
-    te.Minute = GPS.minute;
-    te.Day = GPS.day;
-    te.Month = GPS.month;
-    int actualYear = 2000 + GPS.year;
-    te.Year = actualYear - 1970;
-    unixTime = makeTime(te);
-
-    float lata = GPS.latitude/100;
-    float longi = 0 - (GPS.longitude/100);
-    int tz = -8;
-
-    sr.calculate(lata, longi, unixTime);
-    Serial.print("Unixtime: ");
-    Serial.println(unixTime);
-
-    if (sr.isVisible){
-      Serial.println("It's daytime!");
-      if (currentBrightness != daytimeBrightness) {
-        Serial.println("Setting brightness to day");
-        matrix.setBrightness(daytimeBrightness);
-        currentBrightness = daytimeBrightness;
-      }
-    } else {
-      Serial.println("It's nighttime!");
-      if (currentBrightness != nighttimeBrightness) {
-        Serial.println("Setting brightness to night");
-        matrix.setBrightness(nighttimeBrightness);
-        currentBrightness = nighttimeBrightness;
-      }   
-    }
-
-
     Serial.print("Fix: "); Serial.print((int)GPS.fix);
     Serial.print(" quality: "); Serial.println((int)GPS.fixquality);
     if (GPS.fix) {
-       //Meters to feet...
-       double doubFt = GPS.altitude * 3.28084;
-       //Round to nearest 10
-       int mod = (int) doubFt % 10;
-       if (mod < 5) {
-        doubFt = doubFt - mod;
-       } else {
-         doubFt = doubFt + (10 - mod);
-       }
-       matrix.print(doubFt);
-       matrix.writeDisplay(); 
+
+      setBrightness();
+
+      // Calculate and display altitude
+      double doubFt = GPS.altitude * 3.28084;
+      //Round to nearest 10
+      int mod = (int) doubFt % 10;
+      if (mod < 5) {
+      doubFt = doubFt - mod;
+      } else {
+        doubFt = doubFt + (10 - mod);
+      }
+      int intAltitude = (int)doubFt;
+      // If it's greater than 9,999, display in the thousands instead (e.g. 11300 will be 11.3K)
+      if (doubFt > 9999){
+        unsigned a = (intAltitude / 10000U) % 10;
+        unsigned b = (intAltitude / 1000U) % 10;
+        unsigned c = (intAltitude / 100U) % 10;
+        matrix.writeDigitNum(0, a);
+        matrix.writeDigitNum(1, b, true);
+        matrix.writeDigitNum(3, c);
+        matrix.writeDigitAscii(4, 75);
+        Serial.print("Altitude: "); Serial.println(intAltitude);
+
+      } else {
+        matrix.print(intAltitude);
+        Serial.print("Altitude: "); Serial.println(intAltitude);
+      }
+
+      matrix.writeDisplay(); 
       Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
     } 
   }
