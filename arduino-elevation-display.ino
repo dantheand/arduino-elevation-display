@@ -7,13 +7,17 @@
 
 //And the Adafruit 7 segment I2C LCD
 
-#include <Adafruit_GPS.h>
+#include <Wire.h>
 #include <SoftwareSerial.h>
+
+// v1.6.1
 #include <TimeLib.h>
 // Mild modification required for Sunrise v2.0.4 to get it to compile with Arduino UNO (see README)
 #include <SunRise.h>
-#include <Wire.h> 
+// v1.5.1
 #include "Adafruit_LEDBackpack.h"
+// v1.7.5
+#include <Adafruit_GPS.h>
 
 Adafruit_7segment matrix = Adafruit_7segment();
 
