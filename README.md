@@ -83,17 +83,18 @@ On my car there was a small compartment above the rear-view mirror where I could
 
 That's it!
 
-## Acknowledgements
-The Arduino code and car installation instructions were adapted from Kris Linquist's [Arduino-Elevation-Display](https://github.com/klinquist/Arduino-Elevation-Display) repo.
-
-With the help of Devin J., the 3D model for the 7-segment display case was adapted from [Pyrce007's Adafruit Segmented Display Case](https://www.thingiverse.com/thing:2669204). We added the STEMMA QT ports and adjusted the dimensions of the face opening. 
-
 ## Other Learning Resources
 I highly recommend checking out the guides in the [Adafruit Learning System](https://learn.adafruit.com/) if you want to learn more about any of the parts or their Arduino libraries. 
 
 Each Arduino library also comes with loads of useful examples you can find in the Arduino IDE via: `File > Examples`
 
+## Acknowledgements
+The Arduino code and car installation instructions were adapted from Kris Linquist's [Arduino-Elevation-Display](https://github.com/klinquist/Arduino-Elevation-Display) repo.
+
+With the help of Devin J., the 3D model for the 7-segment display case was adapted from [Pyrce007's Adafruit Segmented Display Case](https://www.thingiverse.com/thing:2669204). We added the STEMMA QT ports and adjusted the dimensions of the face opening. 
+
+
 ## Licenses
-The Arduino code license is TBD.
+The Arduino code license is MIT.
 
 The display case .stl file is licensed under the [Creative Commons - Attribution - Share Alike](https://creativecommons.org/licenses/by-sa/3.0/) license to be compatible with the license on the [original source](https://www.thingiverse.com/thing:2669204).
