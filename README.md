@@ -45,7 +45,7 @@ Having a long cable go to the display made it so I could stuff the rest of the c
 This required editing the library file locally. 
 
 ### 3D Printing the Case
-<.stl file to come>
+Create the case by printing the two .stl files in this repo (units are in millimeter). The case snaps together and can be separated by prying the small notch on the side.
 
 #### Printer settings
 - Printer make: Prusa
